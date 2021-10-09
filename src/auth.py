@@ -5,7 +5,7 @@ AUTHORIZATION_BASE_URL = "https://www.strava.com/oauth/authorize"
 
 
 def authorize_url(CLIENT_ID):
-    redirect_uri = "https://127.0.0.1:5000/strava_auth_successful"
+    redirect_uri = "http://localhost:5000/strava_auth_successful"
     params = {
         "client_id": CLIENT_ID,
         "redirect_uri": redirect_uri,

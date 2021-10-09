@@ -43,16 +43,17 @@ def strava_authorize():
     return redirect(location=authorize_url(CLIENT_ID))
 
 
-@app.route("/strava_auth_successful", methods=["GET"])
+@app.route("/strava_auth_successful")
 def strava_auth_successful():
-    # params = {
-    #     "client_id": CLIENT_ID,
-    #     "client_secret": CLIENT_SECRET,
-    #     "code": "test",
-    #     "grant_type": "authorization_code"
-    # }
+    print("Inside strava_auth_successful")
     print(request.args.get("code"))
     print(request.args.get("scope"))
+    return render_template("index.html")
+
+
+@app.route("/test")
+def print_test():
+    print("Hello Wotld")
 
 
 @app.route("/home")
