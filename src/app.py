@@ -24,6 +24,10 @@ def app_main():
     """
     Flask main function
     """
+    print("Hello")
+    if not session:
+        return render_template("index.html")
+
     return render_template("index.html", athlete_id=session["athlete_id"])
 
 
