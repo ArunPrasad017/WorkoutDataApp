@@ -4,6 +4,7 @@ import requests
 from flask import Flask, redirect, render_template, request, session, url_for
 
 from auth import authorize_url, refresh_access_token
+from config import *  # noqa
 
 app = Flask(__name__)
 app.secret_key = "teststring"
@@ -13,17 +14,17 @@ URL = "https://www.strava.com/api/v3/athlete/activities"
 # the final api call and method will be strongly coupled.
 
 AUTHORIZATION_BASE_URL = "https://www.strava.com/oauth/authorize"
-CLIENT_ID = ""
-CLIENT_SECRET = ""
+
 token_dict = {}
 
 
 @app.route("/")
+@app.route("/home")
 def app_main():
     """
     Flask main function
     """
-    return render_template("index.html")
+    return render_template("index.html", athlete_id=session["athlete_id"])
 
 
 # Route for handling the login page logic
@@ -40,7 +41,7 @@ def login():
 
 @app.route("/strava_authorize", methods=["GET"])
 def strava_authorize():
-    if "athlete_id" not in session:
+    if "athlete_id" not in session or "refresh_token" not in session:
         return redirect(location=authorize_url(CLIENT_ID))
     print(session)
     return (
@@ -71,26 +72,31 @@ def strava_auth_successful():
     token_dict[str(output_str["athlete"]["id"])] = [ACCESS_TOKEN, REFRESH_TOKEN]
 
     session["athlete_id"] = output_str["athlete"]["id"]
-    return redirect(url_for("home"))
+    session["refresh_token"] = output_str["refresh_token"]
+    return redirect(url_for("app_main"))
 
 
 @app.route("/strava_retreive_athlete")
 def strava_retreive_athlete():
-    if "athlete_id" in token_dict:
-        [ACCESS_TOKEN, REFRESH_TOKEN] = token_dict["athlete_id"]
+    athlete_id = session["athlete_id"]
+    if athlete_id in token_dict:
+        [ACCESS_TOKEN, REFRESH_TOKEN] = token_dict[athlete_id]
     else:
-        REFRESH_TOKEN = session["refresh_token"]
-        # refresh access token here and assign
-        token_dict[session["athlete_id"]] = [None, REFRESH_TOKEN]
+        if "refresh_token" in session:
+            REFRESH_TOKEN = session["refresh_token"]
+            # refresh access token here and assign
+            token_dict[athlete_id] = [None, REFRESH_TOKEN]
+        else:
+            return redirect(url_for("strava_authorize"))
     ACCESS_TOKEN = refresh_access_token(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET)
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
     response2 = requests.get("https://www.strava.com/api/v3/athlete", headers=headers)
-    print(f"{response2.text=}")
-
-
-@app.route("/home")
-def home():
-    return render_template("index.html")
+    print(f"{response2.json()=}")
+    return render_template(
+        "main.html",
+        firstname=response2.json()["firstname"],
+        lastname=response2.json()["lastname"],
+    )
 
 
 if __name__ == "__main__":
