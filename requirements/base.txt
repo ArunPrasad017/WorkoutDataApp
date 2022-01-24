@@ -2,3 +2,6 @@ requests
 pytest
 Flask
 httpie
+flask-sqlalchemy
+flask-migrate
+psycopg2-binary

@@ -28,5 +28,4 @@ def refresh_access_token(refresh_token, CLIENT_ID, CLIENT_SECRET):
     }
     refreshed_token = requests.post(
         REFRESH_ACCESS_TOKEN_URL, params=params).json()
-    print(refreshed_token)
     return refreshed_token["access_token"]

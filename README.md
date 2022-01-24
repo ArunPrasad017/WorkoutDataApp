@@ -13,7 +13,7 @@ sh run.sh
 
 ## inside the container
 ```
-python src/app.py
+python3 -m src
 ```
 
 ## to navigate from local browser
