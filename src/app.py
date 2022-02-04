@@ -1,26 +1,116 @@
-import os
-from flask import Flask
 import requests
+from flask import Flask, redirect, render_template, request, session, url_for
+from flask_sqlalchemy import SQLAlchemy
+
+from src.auth import authorize_url, refresh_access_token
+from src import strava_api
+from src.constants import *  # noqa
 
 app = Flask(__name__)
+app.secret_key = "teststring"
+app.config.from_object("src.config.Config")
+db = SQLAlchemy(app)
 
-ACCESS_TOKEN = os.environ.get("strava_access_key")
-URL = "https://www.strava.com/api/v3/athlete"
+
+URL = "https://www.strava.com/api/v3/athlete/activities"
+# Until v3 the url is going to be same so make as general config
+# the final api call and method will be strongly coupled.
+
+AUTHORIZATION_BASE_URL = "https://www.strava.com/oauth/authorize"
+
+token_dict = {}
+obj = strava_api.StravaApi()
+
+
+class User(db.Model):
+    __tablename__ = "users"
+
+    id = db.Column(db.Integer, primary_key=True)
+    userid = db.Column(db.String(200))
+    email = db.Column(db.String(200))
+
+    def __init__(self, userid, email):
+        self.userid = userid
+        self.email = email
 
 
 @app.route("/")
+@app.route("/home")
 def app_main():
     """
     Flask main function
     """
-    return "Flask app init"
+    if not obj.session:
+        obj.session = session
+        return render_template("index.html")
+
+    return render_template("index.html", athlete_id=obj.session["athlete_id"])
 
 
-def return_resp():
-    """
-    Temp function
-    """
-    headers_auth = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
-    print(headers_auth)
-    response = requests.get(URL, headers=headers_auth)
-    return response.content
+# Route for handling the login page logic
+@app.route("/login", methods=["GET"])
+def login():
+    error = None
+    if request.method == "POST":
+        if request.form["username"] != "admin" or request.form["password"] != "admin":
+            error = "Invalid Credentials. Please try again."
+        else:
+            return redirect(url_for("home"))
+    return render_template("base.html", error=error)
+
+
+@app.route("/strava_authorize", methods=["GET"])
+def strava_authorize():
+    if "athlete_id" not in obj.session or "refresh_token" not in obj.session:
+        return redirect(location=authorize_url(CLIENT_ID))
+    return (
+        "<html>"
+        "<body>"
+        "you are logged already "
+        '<a href="http://localhost:5000/">go back</a>'
+        "</body>"
+        "</html>"
+    )
+
+
+# remove/rewrite after discussion with Stefano
+def set_refresh_token():
+    obj.session["refresh_token"] = token_dict[obj.session["athlete_id"]][1]
+
+
+@ app.route("/strava_auth_successful")
+def strava_auth_successful():
+    print("Inside strava_auth_successful")
+    params = {
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+        "code": request.args.get("code"),
+        "grant_type": "authorization_code",
+    }
+    # add to the main strava api class(auth)
+    token_dict[obj.session["athlete_id"]] = obj.get_access_refresh_token(params)
+    set_refresh_token()
+    return redirect(url_for("app_main"))
+
+
+@ app.route("/strava_retreive_athlete")
+def strava_retreive_athlete():
+    athlete_id = obj.get_athlete_id()
+    if athlete_id in token_dict:
+        [ACCESS_TOKEN, REFRESH_TOKEN] = token_dict[athlete_id]
+    else:
+        if "refresh_token" not in obj.session:
+            return redirect(url_for("strava_authorize"))
+        REFRESH_TOKEN = obj.session["refresh_token"]
+        # refresh access token here and assign
+        token_dict[athlete_id] = [None, REFRESH_TOKEN]
+    ACCESS_TOKEN = refresh_access_token(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET)
+    headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
+    response2 = requests.get("https://www.strava.com/api/v3/athlete", headers=headers)
+    print(f"{response2.json()=}")
+
+    return render_template(
+        "main.html",
+        firstname=response2.json()["firstname"],
+        lastname=response2.json()["lastname"],
+    )

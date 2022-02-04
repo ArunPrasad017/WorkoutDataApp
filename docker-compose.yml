@@ -1,0 +1,22 @@
+version: "3"
+services:
+  web:
+    build: .
+    command: python3 -m src
+    ports:
+      - 5000:5000
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+
+  db:
+    image: "postgres:13-alpine"
+    environment:
+      POSTGRES_USER: postgres # The PostgreSQL user (useful to connect to the database)
+      POSTGRES_PASSWORD: postgres # The PostgreSQL password (useful to connect to the database)
+      POSTGRES_DB: postgres # The PostgreSQL default database (automatically created at first launch)
+    volumes:
+      - postgres_data/:/var/lib/postgresql/data/
+volumes:
+  postgres_data:
