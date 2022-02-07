@@ -87,7 +87,6 @@ def add_user_to_db(user):
 
 @ app.route("/strava_auth_successful")
 def strava_auth_successful():
-    print("Inside strava_auth_successful")
     params = {
         "client_id": CLIENT_ID,
         "client_secret": CLIENT_SECRET,
@@ -97,7 +96,6 @@ def strava_auth_successful():
     # add to the main strava api class(auth)
     token_dict[obj.session["athlete_id"]] = obj.get_access_refresh_token(params)
     set_refresh_token()
-    print(token_dict)
     return redirect(url_for("app_main"))
 
 
@@ -115,7 +113,6 @@ def strava_retreive_athlete():
     ACCESS_TOKEN = refresh_access_token(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET)
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
     response2 = requests.get("https://www.strava.com/api/v3/athlete", headers=headers)
-    print(response2.json()['id'])
     user = User(response2.json()['id'], response2.json()[
                 'username'], token_dict[response2.json()['id']][1])
     add_user_to_db(user)
