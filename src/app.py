@@ -26,12 +26,14 @@ class User(db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
-    userid = db.Column(db.String(200))
-    email = db.Column(db.String(200))
+    user_id = db.Column(db.Integer)
+    user_name = db.Column(db.String(400))
+    refresh_token = db.Column(db.String(400))
 
-    def __init__(self, userid, email):
-        self.userid = userid
-        self.email = email
+    def __init__(self, user_id, user_name, refresh_token):
+        self.user_id = user_id
+        self.user_name = user_name
+        self.refresh_token = refresh_token
 
 
 @app.route("/")
@@ -78,6 +80,11 @@ def set_refresh_token():
     obj.session["refresh_token"] = token_dict[obj.session["athlete_id"]][1]
 
 
+def add_user_to_db(user):
+    db.session.add(user)
+    db.session.commit()
+
+
 @ app.route("/strava_auth_successful")
 def strava_auth_successful():
     print("Inside strava_auth_successful")
@@ -90,6 +97,7 @@ def strava_auth_successful():
     # add to the main strava api class(auth)
     token_dict[obj.session["athlete_id"]] = obj.get_access_refresh_token(params)
     set_refresh_token()
+    print(token_dict)
     return redirect(url_for("app_main"))
 
 
@@ -107,7 +115,10 @@ def strava_retreive_athlete():
     ACCESS_TOKEN = refresh_access_token(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET)
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
     response2 = requests.get("https://www.strava.com/api/v3/athlete", headers=headers)
-    print(f"{response2.json()=}")
+    print(response2.json()['id'])
+    user = User(response2.json()['id'], response2.json()[
+                'username'], token_dict[response2.json()['id']][1])
+    add_user_to_db(user)
 
     return render_template(
         "main.html",
