@@ -25,8 +25,7 @@ obj = strava_api.StravaApi()
 class User(db.Model):
     __tablename__ = "users"
 
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer)
+    user_id = db.Column(db.Integer, primary_key=True)
     user_name = db.Column(db.String(400))
     refresh_token = db.Column(db.String(400))
 
@@ -81,8 +80,14 @@ def set_refresh_token():
 
 
 def add_user_to_db(user):
-    db.session.add(user)
-    db.session.commit()
+    # TODO(Arun): add a check if the pk exists before making the update
+    print(user)
+    exists = db.session.query(
+        db.session.query(User).filter_by(user_id=user.user_id).exists()
+    ).scalar()
+    if not exists:
+        db.session.add(user)
+        db.session.commit()
 
 
 @ app.route("/strava_auth_successful")
