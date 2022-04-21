@@ -35,6 +35,42 @@ class User(db.Model):
         self.refresh_token = refresh_token
 
 
+class AuthTypeDim(db.Model):
+    __tablename__ = "auth_type_dim"
+    auth_type_id = db.Column(db.Integer, primary_key=True)
+    auth_type_name = db.Column(db.String(400))
+
+    def __init__(self, auth_type_id, auth_type_name):
+        self.auth_type_id = auth_type_id
+        self.auth_type_name = auth_type_name
+
+
+class UserAuthType(db.Model):
+    __tablename__ = "user_auth_type"
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("users.user_id"), primary_key=True, nullable=False
+    )
+    auth_type_id = db.Column(
+        db.Integer,
+        db.ForeignKey("auth_type_dim.auth_type_id"),
+        primary_key=True,
+        nullable=False,
+    )
+    auth_relation = db.relationship(
+        "auth_relation",
+        primaryjoin="and_(users.user_id==auth_relation.user_id, "
+        "auth_type_dim.auth_type_id==auth_relation.auth_type_id)",
+    )
+    refresh_token = db.Column(db.String(400))
+
+    def __init__(self, id, user_id, auth_type_id, refresh_token):
+        self.id = id
+        self.user_id = user_id
+        self.auth_type_id = auth_type_id
+        self.refresh_token = refresh_token
+
+
 @app.route("/")
 @app.route("/home")
 def app_main():
@@ -81,7 +117,6 @@ def set_refresh_token():
 
 def add_user_to_db(user):
     # TODO(Arun): add a check if the pk exists before making the update
-    print(user)
     exists = db.session.query(
         db.session.query(User).filter_by(user_id=user.user_id).exists()
     ).scalar()
@@ -90,7 +125,7 @@ def add_user_to_db(user):
         db.session.commit()
 
 
-@ app.route("/strava_auth_successful")
+@app.route("/strava_auth_successful")
 def strava_auth_successful():
     params = {
         "client_id": CLIENT_ID,
@@ -101,10 +136,22 @@ def strava_auth_successful():
     # add to the main strava api class(auth)
     token_dict[obj.session["athlete_id"]] = obj.get_access_refresh_token(params)
     set_refresh_token()
+    response2 = requests.get(
+        "https://www.strava.com/api/v3/athlete",
+        headers={"Authorization": f'Bearer {token_dict[obj.session["athlete_id"]][0]}'},
+    )
+    print(response2.json())
+    user = User(
+        response2.json()["id"],
+        response2.json()["username"],
+        token_dict[response2.json()["id"]][1],
+    )
+    add_user_to_db(user)
+
     return redirect(url_for("app_main"))
 
 
-@ app.route("/strava_retreive_athlete")
+@app.route("/strava_retreive_athlete")
 def strava_retreive_athlete():
     athlete_id = obj.get_athlete_id()
     if athlete_id in token_dict:
@@ -118,10 +165,6 @@ def strava_retreive_athlete():
     ACCESS_TOKEN = refresh_access_token(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET)
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
     response2 = requests.get("https://www.strava.com/api/v3/athlete", headers=headers)
-    user = User(response2.json()['id'], response2.json()[
-                'username'], token_dict[response2.json()['id']][1])
-    add_user_to_db(user)
-
     return render_template(
         "main.html",
         firstname=response2.json()["firstname"],
