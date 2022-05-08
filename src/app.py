@@ -24,7 +24,6 @@ obj = strava_api.StravaApi()
 
 class User(db.Model):
     __tablename__ = "users"
-
     id = db.Column(db.Integer, primary_key=True)
     user_name = db.Column(db.String(400))
     refresh_token = db.Column(db.String(400))
@@ -58,7 +57,6 @@ class UserAuthType(db.Model):
         nullable=False,
     )
     auth_relation = db.relationship("AuthTypeDim")
-
 
 @app.route("/")
 @app.route("/home")
@@ -130,7 +128,6 @@ def strava_auth_successful():
         "https://www.strava.com/api/v3/athlete",
         headers={"Authorization": f'Bearer {token_dict[obj.session["athlete_id"]][0]}'},
     )
-    print(response2.json())
     user = User(
         response2.json()["id"],
         response2.json()["username"],
@@ -154,7 +151,6 @@ def strava_retreive_athlete():
     ACCESS_TOKEN = refresh_access_token(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET)
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
     response2 = requests.get("https://www.strava.com/api/v3/athlete", headers=headers)
-
     return render_template(
         "main.html",
         firstname=response2.json()["firstname"],
