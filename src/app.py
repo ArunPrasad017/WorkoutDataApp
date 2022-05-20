@@ -64,11 +64,12 @@ class UserAuthType(db.Model):
     )
     refresh_token = db.Column(db.String(400))
 
-    def __init__(self, id, user_id, auth_type_id, refresh_token):
-        self.id = id
-        self.user_id = user_id
-        self.auth_type_id = auth_type_id
-        self.refresh_token = refresh_token
+
+def __init__(self, id, user_id, auth_type_id, refresh_token):
+    self.id = id
+    self.user_id = user_id
+    self.auth_type_id = auth_type_id
+    self.refresh_token = refresh_token
 
 
 @app.route("/")
