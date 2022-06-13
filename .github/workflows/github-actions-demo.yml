@@ -1,4 +1,4 @@
-name: GitHub Actions Demo
+name: GitHub Actions Setup
 on: [push]
 jobs:
   Explore-GitHub-Actions:
@@ -14,4 +14,9 @@ jobs:
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+  Build-Docker-Image:
+    runs-on: ubuntu-latest
+    name: Build The Docker Image
+    steps:
+      - run: docker build . --file Dockerfile --tag WorkoutDataApp:$(date +%s)
+      - run: echo "This job's status is ${{ job.status }}."
