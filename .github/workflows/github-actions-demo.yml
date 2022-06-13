@@ -18,5 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Build The Docker Image
     steps:
+      - run: ls -l
       - run: docker build . --file Dockerfile --tag workoutdataapp:$(date +%s)
       - run: echo "This job's status is ${{ job.status }}."
