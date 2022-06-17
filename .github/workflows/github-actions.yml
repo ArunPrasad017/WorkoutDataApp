@@ -12,6 +12,6 @@ jobs:
           ls ${{ github.workspace }}
       - run: docker build . --file Dockerfile --tag workoutdataapp
       - run: echo "This job's status is ${{ job.status }}."
-      - run: docker run -v $(pwd):/usr/app workoutdatapp python -m pytest
+      - run: docker run -v $(pwd):/usr/app workoutdataapp python -m pytest
   # Infra-setup:
   # Run-test:
