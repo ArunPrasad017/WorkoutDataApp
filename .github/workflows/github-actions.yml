@@ -10,5 +10,8 @@ jobs:
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
-      - run: docker build . --file Dockerfile --tag workoutdataapp:$(date +%s)
+      - run: docker build . --file Dockerfile --tag workoutdataapp:$(date)
       - run: echo "This job's status is ${{ job.status }}."
+      - run: docker run workoutdataapp:$(date)
+  # Infra-setup:
+  # Run-test:
