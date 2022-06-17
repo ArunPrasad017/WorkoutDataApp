@@ -1,5 +1,6 @@
 requests
 pytest
+pytest-cov
 Flask
 httpie
 flask-sqlalchemy
