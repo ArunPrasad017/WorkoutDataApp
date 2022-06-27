@@ -6,3 +6,4 @@ httpie
 flask-sqlalchemy
 flask-migrate
 psycopg2-binary
+pysqlite3

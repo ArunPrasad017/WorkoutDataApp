@@ -16,7 +16,7 @@ def authorize_url(CLIENT_ID):
         "scope": "activity:read_all",
     }
     values_url = urllib.parse.urlencode(params)
-    return AUTHORIZATION_BASE_URL + "?" + values_url
+    return f"{AUTHORIZATION_BASE_URL}?{values_url}"
 
 
 def refresh_access_token(refresh_token, CLIENT_ID, CLIENT_SECRET):
@@ -26,6 +26,5 @@ def refresh_access_token(refresh_token, CLIENT_ID, CLIENT_SECRET):
         "grant_type": "refresh_token",
         "refresh_token": refresh_token,
     }
-    refreshed_token = requests.post(
-        REFRESH_ACCESS_TOKEN_URL, params=params).json()
+    refreshed_token = requests.post(REFRESH_ACCESS_TOKEN_URL, params=params).json()
     return refreshed_token["access_token"]

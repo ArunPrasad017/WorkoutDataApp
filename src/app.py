@@ -1,3 +1,5 @@
+import os
+
 import requests
 from flask import Flask, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -6,9 +8,17 @@ from src.auth import authorize_url, refresh_access_token
 from src import strava_api
 from src.constants import *  # noqa
 
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+
 app = Flask(__name__)
 app.secret_key = "teststring"
 app.config.from_object("src.config.Config")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
+    basedir, "database.db"
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 db = SQLAlchemy(app)
 
 
@@ -90,7 +100,7 @@ def add_user_to_db(user):
         db.session.commit()
 
 
-@ app.route("/strava_auth_successful")
+@app.route("/strava_auth_successful")
 def strava_auth_successful():
     params = {
         "client_id": CLIENT_ID,
@@ -104,7 +114,7 @@ def strava_auth_successful():
     return redirect(url_for("app_main"))
 
 
-@ app.route("/strava_retreive_athlete")
+@app.route("/strava_retreive_athlete")
 def strava_retreive_athlete():
     athlete_id = obj.get_athlete_id()
     if athlete_id in token_dict:
@@ -118,8 +128,11 @@ def strava_retreive_athlete():
     ACCESS_TOKEN = refresh_access_token(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET)
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
     response2 = requests.get("https://www.strava.com/api/v3/athlete", headers=headers)
-    user = User(response2.json()['id'], response2.json()[
-                'username'], token_dict[response2.json()['id']][1])
+    user = User(
+        response2.json()["id"],
+        response2.json()["username"],
+        token_dict[response2.json()["id"]][1],
+    )
     add_user_to_db(user)
 
     return render_template(

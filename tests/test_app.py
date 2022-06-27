@@ -8,8 +8,6 @@ def client():
 
 
 def test_home(client):
-    resp = client.get('/')
-    print(resp.data)
-    print(type(resp.data))
+    resp = client.get("/")
     assert resp.status_code == 200
     assert isinstance(resp.data, bytes)
