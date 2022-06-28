@@ -11,15 +11,19 @@ from src.constants import *  # noqa
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
-app = Flask(__name__)
-app.secret_key = "teststring"
-app.config.from_object("src.config.Config")
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
-    basedir, "database.db"
-)
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+def create_app():
+    app = Flask(__name__)
+    app.secret_key = "teststring"
+    app.config.from_object("src.config.Config")
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
+        basedir, "database.db"
+    )
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    db = SQLAlchemy(app)
+    return app, db
 
-db = SQLAlchemy(app)
+
+app, db = create_app()
 
 
 URL = "https://www.strava.com/api/v3/athlete/activities"
@@ -91,7 +95,6 @@ def set_refresh_token():
 
 def add_user_to_db(user):
     # TODO(Arun): add a check if the pk exists before making the update
-    print(user)
     exists = db.session.query(
         db.session.query(User).filter_by(user_id=user.user_id).exists()
     ).scalar()
@@ -134,7 +137,6 @@ def strava_retreive_athlete():
         token_dict[response2.json()["id"]][1],
     )
     add_user_to_db(user)
-
     return render_template(
         "main.html",
         firstname=response2.json()["firstname"],
