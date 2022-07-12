@@ -63,7 +63,7 @@ def app_main():
 
 
 # Route for handling the login page logic
-@app.route("/login", methods=["GET"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
     if request.method == "POST":

@@ -1,8 +1,6 @@
 import json
 import requests
 
-# from auth import refresh_access_token
-
 
 class StravaApi:
     def __init__(self, session=None):
