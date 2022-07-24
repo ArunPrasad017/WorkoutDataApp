@@ -60,21 +60,6 @@ class User(db.Model):
         self.refresh_token = refresh_token
 
 
-# create a method of a class for this where all attributes such as obj
-# can be one of input params to the class(routes.py is routing to the logic which needs
-# to be a separate function)
-# @app.route("/")
-# @app.route("/home")
-# def app_main():
-#     """
-#     Flask main function
-#     """
-#     if not obj.session:
-#         obj.session = session
-#         return render_template("index.html")
-
-#     return render_template("index.html", athlete_id=obj.session["athlete_id"])
-
 app.register_blueprint(router)
 
 
