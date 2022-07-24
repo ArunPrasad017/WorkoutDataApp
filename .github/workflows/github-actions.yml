@@ -1,0 +1,18 @@
+name: GitHub Actions Setup
+on: [push]
+jobs:
+  Build-Docker-Image:
+    runs-on: ubuntu-latest
+    name: Build The Docker Image
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: List files in the repository
+        run: |
+          ls ${{ github.workspace }}
+      - run: docker build . --file Dockerfile --tag workoutdataapp
+      - run: echo "This job's status is ${{ job.status }}."
+      - run: docker run -v $(pwd):/usr/app workoutdataapp python -m pytest --cov-report xml --cov-report term --cov .
+  # Print the coverage metrics
+  # Infra-setup:
+  # Run-test:

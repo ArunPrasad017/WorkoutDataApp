@@ -1,3 +1,5 @@
+import os
+
 import requests
 from flask import Flask, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -6,9 +8,30 @@ from src.auth import authorize_url, refresh_access_token
 from src import strava_api
 from src.constants import *  # noqa
 
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+
+# def create_app():
+#     app = Flask(__name__)
+#     app.secret_key = "teststring"
+#     app.config.from_object("src.config.Config")
+#     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
+#         basedir, "database.db"
+#     )
+#     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+#     db = SQLAlchemy(app)
+#     return app, db
+
+
+# app, db = create_app()
 app = Flask(__name__)
 app.secret_key = "teststring"
 app.config.from_object("src.config.Config")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
+    basedir, "../db/database.db"
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 db = SQLAlchemy(app)
 
 
@@ -35,6 +58,9 @@ class User(db.Model):
         self.refresh_token = refresh_token
 
 
+# create a method of a class for this where all attributes such as obj
+# can be one of input params to the class(routes.py is routing to the logic which needs
+# to be a separate function)
 @app.route("/")
 @app.route("/home")
 def app_main():
@@ -49,7 +75,7 @@ def app_main():
 
 
 # Route for handling the login page logic
-@app.route("/login", methods=["GET"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
     if request.method == "POST":
@@ -79,9 +105,9 @@ def set_refresh_token():
     obj.session["refresh_token"] = token_dict[obj.session["athlete_id"]][1]
 
 
-def add_user_to_db(user):
+# Changed global vars for db to an input param
+def add_user_to_db(user, db):
     # TODO(Arun): add a check if the pk exists before making the update
-    print(user)
     exists = db.session.query(
         db.session.query(User).filter_by(user_id=user.user_id).exists()
     ).scalar()
@@ -90,7 +116,7 @@ def add_user_to_db(user):
         db.session.commit()
 
 
-@ app.route("/strava_auth_successful")
+@app.route("/strava_auth_successful")
 def strava_auth_successful():
     params = {
         "client_id": CLIENT_ID,
@@ -104,7 +130,7 @@ def strava_auth_successful():
     return redirect(url_for("app_main"))
 
 
-@ app.route("/strava_retreive_athlete")
+@app.route("/strava_retreive_athlete")
 def strava_retreive_athlete():
     athlete_id = obj.get_athlete_id()
     if athlete_id in token_dict:
@@ -118,10 +144,12 @@ def strava_retreive_athlete():
     ACCESS_TOKEN = refresh_access_token(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET)
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
     response2 = requests.get("https://www.strava.com/api/v3/athlete", headers=headers)
-    user = User(response2.json()['id'], response2.json()[
-                'username'], token_dict[response2.json()['id']][1])
-    add_user_to_db(user)
-
+    user = User(
+        response2.json()["id"],
+        response2.json()["username"],
+        token_dict[response2.json()["id"]][1],
+    )
+    add_user_to_db(user, db)
     return render_template(
         "main.html",
         firstname=response2.json()["firstname"],
