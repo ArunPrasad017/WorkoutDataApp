@@ -1,11 +1,12 @@
 import os
 
 import requests
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, redirect, render_template, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 from src.auth import authorize_url, refresh_access_token
 from src import strava_api
+from src.routes import router
 from src.constants import *  # noqa
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -43,6 +44,7 @@ AUTHORIZATION_BASE_URL = "https://www.strava.com/oauth/authorize"
 
 token_dict = {}
 obj = strava_api.StravaApi()
+app.config["obj_to_pass"] = obj
 
 
 class User(db.Model):
@@ -61,17 +63,19 @@ class User(db.Model):
 # create a method of a class for this where all attributes such as obj
 # can be one of input params to the class(routes.py is routing to the logic which needs
 # to be a separate function)
-@app.route("/")
-@app.route("/home")
-def app_main():
-    """
-    Flask main function
-    """
-    if not obj.session:
-        obj.session = session
-        return render_template("index.html")
+# @app.route("/")
+# @app.route("/home")
+# def app_main():
+#     """
+#     Flask main function
+#     """
+#     if not obj.session:
+#         obj.session = session
+#         return render_template("index.html")
 
-    return render_template("index.html", athlete_id=obj.session["athlete_id"])
+#     return render_template("index.html", athlete_id=obj.session["athlete_id"])
+
+app.register_blueprint(router)
 
 
 # Route for handling the login page logic
@@ -127,7 +131,7 @@ def strava_auth_successful():
     # add to the main strava api class(auth)
     token_dict[obj.session["athlete_id"]] = obj.get_access_refresh_token(params)
     set_refresh_token()
-    return redirect(url_for("app_main"))
+    return redirect(url_for("router.app_main"))
 
 
 @app.route("/strava_retreive_athlete")
