@@ -83,10 +83,9 @@ def test_login_post(client):
         "/login", data=dict(username="test@gmail.com", password="test", login_form="")
     )
     assert resp.status_code == 200
-    admin_resp = client.post(
-        "/login", data=dict(username="admin", password="admin", login_form="")
-    )
-    print(admin_resp)
+    # admin_resp = client.post(
+    #     "/login", data=dict(username="admin", password="admin", login_form="")
+    # )
 
 
 def test_strava_authorize_fail(client):
@@ -96,5 +95,4 @@ def test_strava_authorize_fail(client):
 
 def test_strava_authorize_pass(rest_client_with_id):
     resp = rest_client_with_id.get("/strava_authorize")
-    print(resp.status_code)
     assert resp.status_code == 200

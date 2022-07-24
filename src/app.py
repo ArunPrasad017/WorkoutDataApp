@@ -11,19 +11,28 @@ from src.constants import *  # noqa
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
-def create_app():
-    app = Flask(__name__)
-    app.secret_key = "teststring"
-    app.config.from_object("src.config.Config")
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
-        basedir, "database.db"
-    )
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    db = SQLAlchemy(app)
-    return app, db
+# def create_app():
+#     app = Flask(__name__)
+#     app.secret_key = "teststring"
+#     app.config.from_object("src.config.Config")
+#     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
+#         basedir, "database.db"
+#     )
+#     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+#     db = SQLAlchemy(app)
+#     return app, db
 
 
-app, db = create_app()
+# app, db = create_app()
+app = Flask(__name__)
+app.secret_key = "teststring"
+app.config.from_object("src.config.Config")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
+    basedir, "../db/database.db"
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
 
 
 URL = "https://www.strava.com/api/v3/athlete/activities"
@@ -49,6 +58,9 @@ class User(db.Model):
         self.refresh_token = refresh_token
 
 
+# create a method of a class for this where all attributes such as obj
+# can be one of input params to the class(routes.py is routing to the logic which needs
+# to be a separate function)
 @app.route("/")
 @app.route("/home")
 def app_main():
@@ -93,7 +105,8 @@ def set_refresh_token():
     obj.session["refresh_token"] = token_dict[obj.session["athlete_id"]][1]
 
 
-def add_user_to_db(user):
+# Changed global vars for db to an input param
+def add_user_to_db(user, db):
     # TODO(Arun): add a check if the pk exists before making the update
     exists = db.session.query(
         db.session.query(User).filter_by(user_id=user.user_id).exists()
@@ -136,7 +149,7 @@ def strava_retreive_athlete():
         response2.json()["username"],
         token_dict[response2.json()["id"]][1],
     )
-    add_user_to_db(user)
+    add_user_to_db(user, db)
     return render_template(
         "main.html",
         firstname=response2.json()["firstname"],
