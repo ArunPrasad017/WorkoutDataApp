@@ -11,20 +11,6 @@ from src.constants import *  # noqa
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-
-# def create_app():
-#     app = Flask(__name__)
-#     app.secret_key = "teststring"
-#     app.config.from_object("src.config.Config")
-#     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
-#         basedir, "database.db"
-#     )
-#     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-#     db = SQLAlchemy(app)
-#     return app, db
-
-
-# app, db = create_app()
 app = Flask(__name__)
 app.secret_key = "teststring"
 app.config.from_object("src.config.Config")
@@ -61,18 +47,6 @@ class User(db.Model):
 
 
 app.register_blueprint(router)
-
-
-# Route for handling the login page logic
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    error = None
-    if request.method == "POST":
-        if request.form["username"] != "admin" or request.form["password"] != "admin":
-            error = "Invalid Credentials. Please try again."
-        else:
-            return redirect(url_for("home"))
-    return render_template("base.html", error=error)
 
 
 @app.route("/strava_authorize", methods=["GET"])
