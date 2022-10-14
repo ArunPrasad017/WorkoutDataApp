@@ -1,6 +1,6 @@
 import pytest
 
-from src import app, strava_api
+from src_old import app, strava_api
 
 
 @pytest.fixture

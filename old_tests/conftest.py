@@ -1,5 +1,5 @@
 import pytest
-from src.app import User
+from src_old.app import User
 
 
 @pytest.fixture
