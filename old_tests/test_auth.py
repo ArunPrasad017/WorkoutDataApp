@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from src.auth import refresh_access_token, authorize_url
+from src_old.auth import refresh_access_token, authorize_url
 
 
 class MockPost(MagicMock):
